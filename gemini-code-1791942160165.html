@@ -1,0 +1,1307 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>A Couple Minutes 關係同步牌卡 | 線上遊戲版</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@400;600;700&family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #E75034;
+      --primary-light: #FCECE9;
+      --primary-dark: #C43B22;
+      --bg-cream: #FAF7F4;
+      --card-bg: #FFFFFF;
+      --text-main: #2A2523;
+      --text-sub: #7D7571;
+      --border-color: #EADFD9;
+      --shadow-soft: 0 16px 36px rgba(180, 70, 40, 0.12), 0 4px 12px rgba(0, 0, 0, 0.05);
+      --shadow-hover: 0 24px 48px rgba(180, 70, 40, 0.18), 0 8px 18px rgba(0, 0, 0, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      background: var(--bg-cream);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 10% 20%, rgba(231, 80, 52, 0.04) 0%, transparent 40%),
+        radial-gradient(circle at 90% 80%, rgba(200, 100, 80, 0.04) 0%, transparent 45%);
+    }
+
+    header {
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.85);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border-color);
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+    }
+    .brand-title {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 1.25rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      color: var(--primary);
+    }
+    .brand-subtitle {
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      letter-spacing: 0.15em;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .btn-icon {
+      background: #FFF;
+      border: 1px solid var(--border-color);
+      color: var(--text-main);
+      padding: 8px 12px;
+      border-radius: 99px;
+      cursor: pointer;
+      font-size: 0.82rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+    }
+    .btn-icon:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+      color: var(--primary);
+    }
+
+    /* 播放者提示與狀態列 */
+    .turn-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 20px;
+      background: rgba(231, 80, 52, 0.06);
+      border-bottom: 1px solid rgba(231, 80, 52, 0.1);
+      font-size: 0.85rem;
+    }
+    .turn-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .turn-badge {
+      font-weight: 700;
+      color: var(--primary);
+      background: #FFF;
+      padding: 3px 12px;
+      border-radius: 99px;
+      border: 1px solid rgba(231, 80, 52, 0.25);
+      cursor: pointer;
+    }
+    .switch-player {
+      background: none;
+      border: none;
+      color: var(--text-sub);
+      text-decoration: underline;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .edit-name-btn {
+      background: none;
+      border: none;
+      color: var(--primary);
+      font-size: 0.76rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+    .last3-status-chip {
+      background: #E75034;
+      color: #FFF;
+      padding: 2px 10px;
+      border-radius: 99px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      display: none;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+
+    /* 主題導航 */
+    .themes-wrapper {
+      padding: 12px 16px 6px;
+      overflow-x: auto;
+      white-space: nowrap;
+      scrollbar-width: none;
+    }
+    .themes-wrapper::-webkit-scrollbar {
+      display: none;
+    }
+    .themes-nav {
+      display: inline-flex;
+      gap: 8px;
+    }
+    .theme-tab {
+      background: #FFF;
+      border: 1px solid var(--border-color);
+      border-radius: 99px;
+      padding: 7px 16px;
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-tab.active {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: #FFF;
+      box-shadow: 0 4px 12px rgba(231, 80, 52, 0.25);
+    }
+
+    /* 主題說明欄（隱藏任務，保留序號指引） */
+    .theme-banner {
+      margin: 8px 20px 4px;
+      background: #FFF;
+      border-radius: 14px;
+      padding: 12px 16px;
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 0.82rem;
+    }
+    .theme-banner-header {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .theme-banner-title {
+      font-weight: 700;
+      color: var(--primary);
+      font-size: 0.95rem;
+    }
+    .theme-banner-slogan {
+      color: var(--text-sub);
+      font-size: 0.78rem;
+    }
+    .theme-banner-seq {
+      font-size: 0.76rem;
+      color: var(--primary-dark);
+      margin-top: 2px;
+      font-weight: 500;
+    }
+
+    /* 牌桌核心區域（固定正面朝上） */
+    main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 16px 20px 24px;
+    }
+
+    .card-single {
+      width: 100%;
+      max-width: 320px;
+      height: 470px;
+      border-radius: 20px;
+      box-shadow: var(--shadow-soft);
+      display: flex;
+      flex-direction: column;
+      background: #FFF;
+      border: 1px solid rgba(0,0,0,0.06);
+      justify-content: space-between;
+      overflow: hidden;
+      transition: box-shadow 0.3s ease;
+    }
+    .card-single:hover {
+      box-shadow: var(--shadow-hover);
+    }
+
+    .card-header-bar {
+      background: var(--primary);
+      color: #FFF;
+      height: 38px;
+      padding: 0 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      user-select: none;
+    }
+    .card-dots {
+      display: flex;
+      gap: 5px;
+    }
+    .card-dot {
+      width: 6.5px;
+      height: 6.5px;
+      border-radius: 50%;
+      background: #FFFFFF;
+      opacity: 0.9;
+    }
+    .card-id-badge {
+      font-size: 1.05rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      font-family: 'Noto Serif TC', serif;
+    }
+
+    .card-content {
+      flex: 1;
+      padding: 30px 24px 10px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      position: relative;
+    }
+    .card-question {
+      font-family: 'Noto Serif TC', serif;
+      font-size: 1.25rem;
+      line-height: 1.68;
+      font-weight: 600;
+      color: #1F1916;
+      word-break: break-word;
+    }
+    .card-subhint {
+      margin-top: 14px;
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    .card-graphic-divider {
+      position: relative;
+      width: 100%;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-graphic-line {
+      position: absolute;
+      width: 100%;
+      height: 1.8px;
+      background: var(--primary);
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 1;
+    }
+    .card-graphic-icon {
+      position: relative;
+      z-index: 2;
+      background: #FFF;
+      padding: 0 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .card-graphic-icon svg {
+      width: 44px;
+      height: 44px;
+      stroke: var(--primary);
+      fill: none;
+      stroke-width: 2.2;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+    }
+
+    .card-footer {
+      padding: 16px 0 20px;
+      text-align: center;
+    }
+    .card-footer-logo {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #38302D;
+      letter-spacing: 0.04em;
+      line-height: 1.1;
+      font-family: sans-serif;
+    }
+    .card-footer-sublogo {
+      font-size: 0.78rem;
+      font-weight: 500;
+      color: #38302D;
+      font-family: sans-serif;
+    }
+
+    /* 操控面板 */
+    .controls-panel {
+      margin-top: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 100%;
+      max-width: 320px;
+    }
+    .btn-draw {
+      width: 100%;
+      background: var(--primary);
+      color: #FFF;
+      border: none;
+      padding: 14px 18px;
+      border-radius: 14px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      box-shadow: 0 6px 16px rgba(231, 80, 52, 0.28);
+      transition: all 0.2s ease;
+    }
+    .btn-draw:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    .fn-cards-section-title {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.74rem;
+      color: var(--text-sub);
+      margin-top: 4px;
+      padding: 0 2px;
+    }
+    .fn-cards-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+    }
+    .btn-fn-chip {
+      flex: 1;
+      padding: 9px 4px;
+      border-radius: 10px;
+      background: #FFF;
+      border: 1px solid var(--border-color);
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--primary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.15s ease;
+    }
+    .btn-fn-chip:hover:not(:disabled) {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+    .btn-fn-chip:disabled {
+      background: #EFECE9;
+      border-color: #DDD6D0;
+      color: #AAA19B;
+      cursor: not-allowed;
+      text-decoration: line-through;
+      box-shadow: none;
+    }
+
+    /* 彈窗樣式 */
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .modal-overlay.active {
+      display: flex;
+    }
+    .modal-box {
+      background: #FFF;
+      border-radius: 20px;
+      width: 100%;
+      max-width: 440px;
+      max-height: 85vh;
+      overflow-y: auto;
+      padding: 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      animation: modalIn 0.25s ease-out;
+    }
+    @keyframes modalIn {
+      from { transform: scale(0.92); opacity: 0; }
+      to { transform: scale(1); opacity: 1; }
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 12px;
+    }
+    .modal-title {
+      font-size: 1.15rem;
+      font-family: 'Noto Serif TC', serif;
+      font-weight: 700;
+      color: var(--primary);
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.4rem;
+      color: var(--text-sub);
+      cursor: pointer;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      text-align: left;
+    }
+    .form-label {
+      font-size: 0.82rem;
+      color: var(--text-sub);
+      font-weight: 500;
+    }
+    .form-input {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: 10px;
+      font-size: 0.92rem;
+      outline: none;
+    }
+    .form-input:focus {
+      border-color: var(--primary);
+    }
+
+    /* 計時器 */
+    .timer-display {
+      font-size: 2.8rem;
+      font-weight: 700;
+      font-family: monospace;
+      color: var(--primary);
+      text-align: center;
+      margin: 10px 0;
+    }
+    .timer-presets {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+    }
+    .btn-secondary {
+      background: #FFF;
+      color: var(--text-main);
+      border: 1px solid var(--border-color);
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .btn-secondary:hover {
+      background: #F4EFEB;
+    }
+
+    .card-list-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+      gap: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+    .btn-select-card {
+      padding: 8px 4px;
+      border: 1px solid var(--border-color);
+      background: #FFF;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+    .btn-select-card:hover {
+      background: var(--primary-light);
+      border-color: var(--primary);
+    }
+
+    footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 頂部導航 -->
+  <header>
+    <div class="brand">
+      <div class="brand-title">A Couple Minutes</div>
+      <div class="brand-subtitle">關係同步牌卡 · 線上體驗</div>
+    </div>
+    <div class="header-actions">
+      <button class="btn-icon" id="btnEditPlayers">
+        <span>✏️ 玩家暱稱</span>
+      </button>
+      <button class="btn-icon" id="btnBrowseCards">
+        <span>🔍 選牌庫</span>
+      </button>
+      <button class="btn-icon" id="btnTimerModal">
+        <span>⏱ 計時</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 雙人輪流作答列 -->
+  <div class="turn-bar">
+    <div class="turn-info">
+      <span>輪到：<span class="turn-badge" id="currentPlayerName">伴侶 A</span> 回答</span>
+      <button class="switch-player" id="btnSwitchPlayer">換另一半 ⇄</button>
+    </div>
+    <div class="last3-status-chip" id="last3StatusChip">LAST 3 進行中：剩餘 3 題</div>
+  </div>
+
+  <!-- 主題切換導航 -->
+  <div class="themes-wrapper">
+    <div class="themes-nav" id="themesNav">
+      <button class="theme-tab active" data-theme="first_date">First Date (初次開箱)</button>
+      <button class="theme-tab" data-theme="happy_trip">Happy Trip (歡樂說笑)</button>
+      <button class="theme-tab" data-theme="cozy_trip">Cozy Trip (破冰回暖)</button>
+      <button class="theme-tab" data-theme="heavy_date">Heavy Date (探索界線)</button>
+      <button class="theme-tab" data-theme="friend_date">Friend Date (好友旅行)</button>
+      <button class="theme-tab" data-theme="all">全題庫自由抽 (99)</button>
+      <button class="theme-tab" data-theme="level_1">Level 1 (暖身)</button>
+      <button class="theme-tab" data-theme="level_2">Level 2 (磨合)</button>
+      <button class="theme-tab" data-theme="level_3">Level 3 (深談)</button>
+    </div>
+  </div>
+
+  <!-- 主題情境大卡說明（任務在結算時才揭曉） -->
+  <div class="theme-banner" id="themeBanner">
+    <div class="theme-banner-header">
+      <div class="theme-banner-title" id="themeTitle">First Date</div>
+      <div class="theme-banner-slogan" id="themeSlogan">Try me! 恭喜第一次開牌，歡迎先走這一套</div>
+    </div>
+    <div class="theme-banner-desc" id="themeDesc">
+      請依照 10 張指定編號順序抽牌。採兩人輪流抽牌的方式，待雙方完成作答後，便可進入下一題。
+    </div>
+    <div class="theme-banner-seq" id="themeSequence">指定順序：#03 → #18 → #35 → #13 → #26 → #41 → #05 → #21 → #95 → #23</div>
+  </div>
+
+  <!-- 主牌桌區塊（正面直接呈現，取消翻面機制） -->
+  <main>
+    <div class="card-single" id="cardSingle">
+      <div class="card-header-bar">
+        <div class="card-dots">
+          <span class="card-dot"></span>
+          <span class="card-dot"></span>
+          <span class="card-dot"></span>
+        </div>
+        <div class="card-id-badge" id="cardIdBadge"># 03</div>
+      </div>
+
+      <div class="card-content">
+        <div class="card-question" id="cardQuestion">
+          最常聽到的讚美，和最喜歡聽到的讚美是哪些
+        </div>
+        <div class="card-subhint" id="cardLevelHint">Level 1 · 暖身交流 (主題進度 1/10)</div>
+      </div>
+
+      <div class="card-graphic-divider">
+        <div class="card-graphic-line"></div>
+        <div class="card-graphic-icon" id="cardIconContainer">
+          <svg viewBox="0 0 24 24"><path d="M4 14c2.5 3 5.5 3 8 0 2.5 3 5.5 3 8 0-4-3-6-2-8-5-2 3-4 2-8 5z"/></svg>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        <div class="card-footer-logo">A Couple</div>
+        <div class="card-footer-sublogo">Minutes</div>
+      </div>
+    </div>
+
+    <!-- 操控面板 -->
+    <div class="controls-panel">
+      <button class="btn-draw" id="btnNextCard">
+        <span>✨ 下一題</span>
+      </button>
+
+      <!-- 應變功能卡專區 -->
+      <div class="fn-cards-section-title">
+        <span>應變功能卡（<span id="fnPlayerIndicator">伴侶 A</span> 專屬牌手）</span>
+        <span>單局每張限用一次</span>
+      </div>
+      <div class="fn-cards-row" id="fnCardsRow">
+        <button class="btn-fn-chip" data-fn="LAST 3">🪔 LAST 3</button>
+        <button class="btn-fn-chip" data-fn="???">🔮 ???</button>
+        <button class="btn-fn-chip" data-fn="KISS">💋 KISS</button>
+        <button class="btn-fn-chip" data-fn="PASS">🪶 PASS</button>
+        <button class="btn-fn-chip" data-fn="HUG">🪐 HUG</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 更改玩家暱稱彈窗 -->
+  <div class="modal-overlay" id="playerModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">✏️ 設定玩家暱稱</div>
+        <button class="modal-close" data-close="playerModal">&times;</button>
+      </div>
+      <div class="form-group">
+        <label class="form-label">玩家一（先手）</label>
+        <input type="text" class="form-input" id="inputPlayer1" value="伴侶 A" maxlength="10" placeholder="例如：男友、翔文..." />
+      </div>
+      <div class="form-group">
+        <label class="form-label">玩家二（後手）</label>
+        <input type="text" class="form-input" id="inputPlayer2" value="伴侶 B" maxlength="10" placeholder="例如：女友、小美..." />
+      </div>
+      <button class="btn-draw" id="btnSavePlayers" style="margin-top:6px;">儲存暱稱</button>
+    </div>
+  </div>
+
+  <!-- 計時器彈窗 -->
+  <div class="modal-overlay" id="timerModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">⏱ 凝視或深聊計時</div>
+        <button class="modal-close" data-close="timerModal">&times;</button>
+      </div>
+      <p style="font-size: 0.85rem; color: var(--text-sub); text-align: center;">
+        放下一時的言語，專注注視彼此雙眼兩分鐘，或專心聆聽對方的分享。
+      </p>
+      <div class="timer-display" id="timerTime">02:00</div>
+      <div class="timer-presets">
+        <button class="btn-secondary" onclick="setTimer(60)">1 分鐘</button>
+        <button class="btn-secondary" onclick="setTimer(120)">2 分鐘 (推薦)</button>
+        <button class="btn-secondary" onclick="setTimer(180)">3 分鐘</button>
+      </div>
+      <div style="display:flex; gap:10px; margin-top: 10px;">
+        <button class="btn-draw" id="btnStartTimer" style="flex:1;">開始計時</button>
+        <button class="btn-secondary" id="btnResetTimer">重設</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 題庫搜尋清單彈窗 -->
+  <div class="modal-overlay" id="browseModal">
+    <div class="modal-box">
+      <div class="modal-header">
+        <div class="modal-title">🔍 完整卡片目錄</div>
+        <button class="modal-close" data-close="browseModal">&times;</button>
+      </div>
+      <input type="text" class="form-input" id="searchKeyword" placeholder="搜尋問題關鍵字，如：夢想、金錢、吵架..." />
+      <div class="card-list-grid" id="cardListGrid"></div>
+    </div>
+  </div>
+
+  <!-- 功能卡觸發彈窗 -->
+  <div class="modal-overlay" id="fnModal">
+    <div class="modal-box" style="text-align: center;">
+      <div class="modal-header">
+        <div class="modal-title" id="fnModalTitle">應變功能卡出牌！</div>
+        <button class="modal-close" data-close="fnModal">&times;</button>
+      </div>
+      <div style="font-size: 3rem; margin: 10px 0;" id="fnModalIcon">💋</div>
+      <div style="font-size: 1.25rem; font-weight:700; color: var(--primary);" id="fnModalMain">KISS</div>
+      <div style="font-size: 1rem; color: var(--text-main); margin-top: 6px;" id="fnModalDesc">先親一下才要繼續說</div>
+      <p style="font-size: 0.82rem; color: var(--text-sub); margin-top: 12px;" id="fnModalPlayerNote">
+        已由該玩家使用，此張功能牌本局將立即關閉。
+      </p>
+      <button class="btn-draw" style="margin-top: 10px;" onclick="closeModal('fnModal')">執行任務並繼續遊戲</button>
+    </div>
+  </div>
+
+  <!-- 遊戲結束結算彈窗（在最後驚喜揭曉主題專屬任務） -->
+  <div class="modal-overlay" id="gameOverModal">
+    <div class="modal-box" style="text-align: center;">
+      <div class="modal-header">
+        <div class="modal-title">🎉 遊戲圓滿結束！</div>
+        <button class="modal-close" data-close="gameOverModal">&times;</button>
+      </div>
+      <div style="font-size: 3rem; margin: 10px 0;">🥂</div>
+      <div style="font-size: 1.15rem; font-weight:700; color: var(--primary);">
+        你們已經完成了這趟連線對話！
+      </div>
+      <div style="font-size: 0.88rem; color: var(--text-main); margin-top: 10px; line-height: 1.6; text-align: left;" id="gameOverThemeTasks"></div>
+      <div style="display:flex; gap:10px; margin-top: 14px;">
+        <button class="btn-draw" style="flex:1;" onclick="restartCurrentTheme()">重新開始本主題</button>
+        <button class="btn-secondary" onclick="closeModal('gameOverModal')">關閉</button>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    Inspired by womany《A Couple Minutes 關係同步牌卡》· 依實體卡照精確呈現
+  </footer>
+
+  <script>
+    /* ========================================================
+       1. 完整真題庫 (99張)
+    ======================================================== */
+    const CARDS = [
+      { id: "01", text: "現在的你，有沒有因為我而有哪些不同", level: 1, icon: "refresh" },
+      { id: "02", text: "你最擅長的事，以及希望能擅長的事是什麼", level: 1, icon: "trophy" },
+      { id: "03", text: "最常聽到的讚美，和最喜歡聽到的讚美是哪些", level: 1, icon: "lips" },
+      { id: "04", text: "買給自己最有價值的東西，或送過別人最有價值的東西是什麼", level: 1, icon: "gift" },
+      { id: "05", text: "回想你在上次的休假日裡，做了哪些事情", level: 1, icon: "calendar" },
+      { id: "06", text: "有沒有小時候的秘密基地，或是現在最能讓你感到放鬆的地方是哪裡", level: 1, icon: "castle" },
+      { id: "07", text: "覺得自己是浪漫的人嗎", level: 1, icon: "rose" },
+      { id: "08", text: "你認為人生就該及時行樂，還是應該先苦後甘", level: 1, icon: "gamepad" },
+      { id: "09", text: "你最新養成的習慣是什麼", level: 1, icon: "check" },
+      { id: "10", text: "除了睡覺，最近花你最多時間做的那件事情是什麼", level: 1, icon: "clock" },
+      { id: "11", text: "有沒有哪一個專長，是別人都看不出來你會的", level: 1, icon: "glasses" },
+      { id: "12", text: "試著在兩分鐘內，描述自己平常的一天", level: 1, icon: "stopwatch" },
+      { id: "13", text: "請直覺說出三個（或更多）對方的優點", level: 1, icon: "sparkle" },
+      { id: "14", text: "我曾經說過什麼話，讓你印象最深刻", level: 1, icon: "bubble" },
+      { id: "15", text: "試著用一句話，形容我們目前的關係", level: 1, icon: "dots-line" },
+      { id: "16", text: "上次我們稱讚對方，是因為發生什麼事情", level: 1, icon: "thumbs-up" },
+      { id: "17", text: "上次的約會，你還記得哪些或是最喜歡哪一個部分", level: 1, icon: "candle" },
+      { id: "18", text: "你會想要如何慶祝彼此的生日或安排節日", level: 1, icon: "cheers" },
+      { id: "19", text: "每次你只要＿＿＿，就會讓我心跳得很厲害", level: 1, icon: "heartbeat" },
+      { id: "20", text: "我身上有什麼特質是與你不同，而你非常喜歡的", level: 1, icon: "gem" },
+      { id: "21", text: "通常＿＿＿的人，對我來說很有魅力", level: 1, icon: "magnet" },
+      { id: "22", text: "覺得自己是小氣還是大方的人，為什麼", level: 1, icon: "diamond" },
+      { id: "23", text: "你比較喜歡我寫情書、傳簡訊，還是當面說愛你", level: 1, icon: "mail" },
+      { id: "24", text: "哪些時候會讓你特別想起我", level: 1, icon: "thought" },
+      { id: "25", text: "現在最想聽到我對你說哪兩句話", level: 1, icon: "speaker" },
+      { id: "26", text: "如果只能用三句話向陌生人介紹「你眼中的我」，你會怎麼說", level: 1, icon: "eye" },
+      { id: "27", text: "你做過最勇敢的一件事是什麼", level: 1, icon: "sword" },
+      { id: "28", text: "你做過最瘋狂的一件事是什麼", level: 1, icon: "sun-burst" },
+      { id: "29", text: "最近最讓你有成就感的一件事", level: 1, icon: "crown" },
+      { id: "30", text: "最近想要一起成功解鎖的目標有哪些", level: 1, icon: "lock" },
+      { id: "31", text: "最近讓你最開心和最不開心的事情是什麼", level: 1, icon: "theater-mask" },
+      { id: "32", text: "主動求和或道歉對你來說容易嗎？為什麼", level: 1, icon: "handshake" },
+      { id: "33", text: "今天的我，有成功把愛意傳達給你嗎", level: 1, icon: "cupid-arrow" },
+
+      /* Level 2 */
+      { id: "34", text: "我們在一起之後，你有變得更喜歡自己嗎", level: 2, icon: "mirror" },
+      { id: "35", text: "從哪些事可以發現我們真的很像，還是非常不一樣", level: 2, icon: "wave" },
+      { id: "36", text: "你認為經營一段關係，最必要的事是什麼", level: 2, icon: "stairs" },
+      { id: "37", text: "有沒有哪個時候，會讓你特別覺得自己在遷就對方", level: 2, icon: "footsteps" },
+      { id: "38", text: "上次為對方精心準備的禮物或活動，反應是否如你預期", level: 2, icon: "party-hat" },
+      { id: "39", text: "有沒有我做過的哪些事，讓你感到被愛、被支持", level: 2, icon: "target" },
+      { id: "40", text: "你記得上次我們深聊是什麼時候嗎？聊了哪些事情", level: 2, icon: "dots-circle" },
+      { id: "41", text: "當初讓你決定和我在一起的點，和現在最喜歡我的哪一點", level: 2, icon: "play-circle" },
+      { id: "42", text: "我們之間，有什麼是你在意很多次但沒有被正視的事情", level: 2, icon: "cone" },
+      { id: "43", text: "有沒有哪些舉動或表達，能讓我覺得我很重視這份感情", level: 2, icon: "search" },
+      { id: "44", text: "通常是你還是我，會比較堅持自己的選擇", level: 2, icon: "cube" },
+      { id: "45", text: "你覺得誰的事業心比較重？會介意對方把工作帶回家嗎", level: 2, icon: "laptop" },
+      { id: "46", text: "家人給你的意見，通常是僅供參考，還是屬於不可抗力", level: 2, icon: "scroll" },
+      { id: "47", text: "你最喜歡我的哪一個朋友？為什麼", level: 2, icon: "users" },
+      { id: "48", text: "你有沒有最感激的一位朋友，或最難忘的一段友誼", level: 2, icon: "friend-star" },
+      { id: "49", text: "你曾經毫無保留地愛過誰，或不計代價地投入什麼事物嗎", level: 2, icon: "loop" },
+      { id: "50", text: "對於彼此的原生家庭，我們都找到適合的相處模式了嗎", level: 2, icon: "houses" },
+      { id: "51", text: "你和父母吃飯時，通常會聊哪些話題呢", level: 2, icon: "bowl" },
+      { id: "52", text: "我能分享更多過去的事，讓你更了解我的家人嗎", level: 2, icon: "window" },
+      { id: "53", text: "最近有認識新朋友嗎？為什麼會成為朋友", level: 2, icon: "user-plus" },
+      { id: "54", text: "在很久沒聯絡的名單中，你最想聯絡誰", level: 2, icon: "paper-plane" },
+      { id: "55", text: "你的社群軟體都封鎖了誰？為什麼", level: 2, icon: "block" },
+      { id: "56", text: "如果我不小心忘了我們的紀念日，你會難過嗎", level: 2, icon: "storm-cloud" },
+      { id: "57", text: "我要去參加親友聚餐時，你會希望一起出席嗎", level: 2, icon: "two-people" },
+      { id: "58", text: "你會避免跟親友有金錢往來嗎？為什麼", level: 2, icon: "cash" },
+      { id: "59", text: "你覺得吃飯或共用的東西，「由誰付錢」會是我們之間的問題嗎", level: 2, icon: "coins" },
+      { id: "60", text: "最近，最讓你滿意和後悔的消費分別是什麼", level: 2, icon: "bag" },
+      { id: "61", text: "你認為未來我們各自的夢想，會影響我們之間的關係嗎", level: 2, icon: "windy-cloud" },
+      { id: "62", text: "最近一次，意識到自己成長或變老是什麼時候", level: 2, icon: "leaf-shield" },
+      { id: "63", text: "對於同居，你會不會期待或擔心哪個部分", level: 2, icon: "person-house" },
+      { id: "64", text: "若要邁向婚姻，你覺得求婚是必須的嗎？會希望是誰主動？會想在大家面前發生嗎", level: 2, icon: "ring" },
+      { id: "65", text: "你認為我們目前最大的共通點或共識是什麼", level: 2, icon: "venn" },
+      { id: "66", text: "我們現在可以一起做哪件事，會讓我覺得很有戀愛的感覺", level: 2, icon: "flower-badge" },
+
+      /* Level 3 */
+      { id: "67", text: "我們在一起之後，你有開心做自己嗎", level: 3, icon: "user-target" },
+      { id: "68", text: "試著說出一件，最希望對方別再做的事", level: 3, icon: "broken-cube" },
+      { id: "69", text: "覺得對方是「三分鐘熱度」的人嗎？為什麼", level: 3, icon: "match" },
+      { id: "70", text: "有沒有你為我做的哪些事情，總是被我視為理所當然", level: 3, icon: "open-eye" },
+      { id: "71", text: "你認為「在一起」就是要「常常在一起」嗎", level: 3, icon: "double-users" },
+      { id: "72", text: "在你需要我但找不到我的時候，你會怎麼做", level: 3, icon: "crosshair" },
+      { id: "73", text: "我們用來解決衝突或結束冷戰的方式，你最喜歡哪一種", level: 3, icon: "bomb-pill" },
+      { id: "74", text: "有沒有哪次的決定，讓你覺得我沒有參考或尊重你的意見", level: 3, icon: "scale" },
+      { id: "75", text: "試舉兩個我讓你最看不下去的生活習慣", level: 3, icon: "spiral" },
+      { id: "76", text: "最近一起大笑的原因，以及上次為對方準備驚喜是什麼時候", level: 3, icon: "exclamation" },
+      { id: "77", text: "東西能用就好嗎？對於生活質感，我們看法相同嗎", level: 3, icon: "two-bottles" },
+      { id: "78", text: "你覺得我們需要共同帳戶，一起儲蓄理財嗎", level: 3, icon: "ledger" },
+      { id: "79", text: "小時候會常覺得孤單，或是很常哭嗎", level: 3, icon: "crying-eye" },
+      { id: "80", text: "你會做惡夢嗎？會害怕什麼樣的夢境", level: 3, icon: "dark-cloud" },
+      { id: "81", text: "跟家人或朋友一起相處時候的我，和平常的我有沒有哪些不同", level: 3, icon: "family-members" },
+      { id: "82", text: "成長路上，家人做過什麼讓你最感動和最痛苦的事", level: 3, icon: "double-house" },
+      { id: "83", text: "關於我的原生家庭，有沒有哪個人或哪件事，讓你留下特別的印象", level: 3, icon: "house-dialog" },
+      { id: "84", text: "你父母最常責備你的話是什麼，為什麼他們會這樣說", level: 3, icon: "lightning" },
+      { id: "85", text: "你最不喜歡現在自己的哪一點", level: 3, icon: "broken-mirror" },
+      { id: "86", text: "目前人生中遇過的最低潮是什麼時候？發生了什麼事", level: 3, icon: "valley" },
+      { id: "87", text: "有沒有你絕對無法接受的相處模式，最不喜歡的「關係範本」", level: 3, icon: "book-sample" },
+      { id: "88", text: "有沒有最讓你後悔說出口的一句話", level: 3, icon: "no-talk" },
+      { id: "89", text: "有什麼事情是你很努力要喜歡或接納，但還是做不到的", level: 3, icon: "balloon" },
+      { id: "90", text: "詳細分享一件你還沒和我說過的糗事吧", level: 3, icon: "ellipsis-circle" },
+      { id: "91", text: "你認為目前生活裡有哪些問題，會因為你有足夠的錢而被解決", level: 3, icon: "coin-stack" },
+      { id: "92", text: "你認為我身上最受到社會認同的特質或能力是什麼", level: 3, icon: "medal" },
+      { id: "93", text: "你滿意我們現在的關係嗎", level: 3, icon: "pie-chart" },
+      { id: "94", text: "哪些時候我會特別讓你感到信任、有安全感", level: 3, icon: "shield-cross" },
+      { id: "95", text: "近期你最想學會的一件事，或你認為自己早該學會的事是什麼", level: 3, icon: "pencil" },
+      { id: "96", text: "你現在最大的恐懼，或容易擔心的情事是什麼", level: 3, icon: "triple-waves" },
+      { id: "97", text: "對於未來的規劃，我們現在有一致的想法嗎", level: 3, icon: "arrow-right" },
+      { id: "98", text: "婚姻對你來說，是延續一段關係的最佳選項嗎", level: 3, icon: "wedding-cake" },
+      { id: "99", text: "我現在可以為你做什麼事，會對目前的你很有幫助", level: 3, icon: "info-circle" }
+    ];
+
+    const cardMap = {};
+    CARDS.forEach(c => cardMap[c.id] = c);
+
+    /* ========================================================
+       2. 五大主題官方卡號嚴格順序 (照照片排列)
+    ======================================================== */
+    const THEMES = {
+      first_date: {
+        title: "First Date",
+        slogan: "Try me! 恭喜第一次開牌，歡迎先走這一套",
+        desc: "請依序抽出 10 張指定編號卡牌。採兩人輪流抽牌的方式，待雙方完成作答後，便可進入下一題。",
+        cards: ["03", "18", "35", "13", "26", "41", "05", "21", "95", "23"],
+        tasks: [
+          { name: "Tell me", detail: "你最喜歡哪一種，以及讓你印象深刻的答案" },
+          { name: "Shake me", detail: "給對方親密的搖動，一起開心地搖晃" }
+        ]
+      },
+      happy_trip: {
+        title: "Happy Trip",
+        slogan: "Just relax! 只想和你一起說說笑笑",
+        desc: "挑選 10 張指定編號卡牌，依序開啟輕鬆有趣的週末或假期對談。",
+        cards: ["07", "28", "11", "76", "19", "06", "17", "08", "30", "14"],
+        tasks: [
+          { name: "Share with me", detail: "你覺得哪一個最好笑，有沒有你可以做到的事" },
+          { name: "Catch me", detail: "一起突破這件事！有默契地想像對方到不同地方的心情" }
+        ]
+      },
+      cozy_trip: {
+        title: "Cozy Trip",
+        slogan: "Break the ice! 適合尷尬時破冰，或是冷戰後回暖",
+        desc: "適合關係遇到摩擦或冷戰時，溫和地說出心裡話，修復彼此連線。",
+        cards: ["15", "31", "24", "16", "25", "44", "10", "42", "01", "33"],
+        tasks: [
+          { name: "Stay with me", detail: "說說彼此最近最需要，有沒有讓你感動的陪伴" },
+          { name: "Eyes on me", detail: "請保持凝視對方眼神至少兩分鐘" }
+        ]
+      },
+      heavy_date: {
+        title: "Heavy Date",
+        slogan: "Real talk! 探索彼此的界線，又愛又怕的話題",
+        desc: "觸碰敏感、價值觀、恐懼與未來的深層題目，為親密關係奠定穩固基石。",
+        cards: ["32", "42", "36", "60", "46", "71", "56", "85", "93", "34"],
+        tasks: [
+          { name: "Tell me", detail: "有沒有最難回答的一題，以及讓你感到最珍惜的時刻" },
+          { name: "Feed me", detail: "為這一次的對話好好表達感謝，準備彼此喜歡的美食點心" }
+        ]
+      },
+      friend_date: {
+        title: "Friend Date",
+        slogan: "Hooray! 不是戀人也能玩",
+        desc: "邀請好友或閨蜜知己一同開箱，更深刻地理解彼此的內心世界。",
+        cards: ["24", "26", "75", "27", "03", "90", "04", "20", "35", "94"],
+        tasks: [
+          { name: "Play with me", detail: "選出10張最喜歡的題目，多說一點個人感想與收穫" },
+          { name: "Tell me", detail: "當下的你最想說的話，或是最被打動的瞬間" }
+        ]
+      }
+    };
+
+    /* 5 張應變功能卡 */
+    const ACTION_CARDS = {
+      "LAST 3": { code: "LAST 3", desc: "再來三題就結束囉", icon: "🪔" },
+      "???": { code: "???", desc: "可以的話，我想知道更多", icon: "🔮" },
+      "KISS": { code: "KISS", desc: "先親一下才要繼續說", icon: "💋" },
+      "PASS": { code: "PASS", desc: "這題讓我先跳過", icon: "🪶" },
+      "HUG": { code: "HUG", desc: "真的很想要抱抱", icon: "🪐" }
+    };
+
+    /* ========================================================
+       3. 核心狀態與玩家暱稱
+    ======================================================== */
+    let player1Name = "伴侶 A";
+    let player2Name = "伴侶 B";
+    let currentPlayer = player1Name;
+
+    // 獨立記錄各玩家已使用的功能卡
+    const usedFunctionsByPlayer = {};
+    usedFunctionsByPlayer[player1Name] = new Set();
+    usedFunctionsByPlayer[player2Name] = new Set();
+
+    let currentThemeKey = "first_date";
+    let activeDeck = [];
+    let currentIndex = 0;
+
+    // LAST 3 倒數
+    let last3Active = false;
+    let last3Remaining = 3;
+
+    /* DOM 物件 */
+    const cardIdBadge = document.getElementById("cardIdBadge");
+    const cardQuestion = document.getElementById("cardQuestion");
+    const cardLevelHint = document.getElementById("cardLevelHint");
+    const cardIconContainer = document.getElementById("cardIconContainer");
+    const btnNextCard = document.getElementById("btnNextCard");
+    const currentPlayerName = document.getElementById("currentPlayerName");
+    const fnPlayerIndicator = document.getElementById("fnPlayerIndicator");
+    const btnSwitchPlayer = document.getElementById("btnSwitchPlayer");
+    const themeBanner = document.getElementById("themeBanner");
+    const last3StatusChip = document.getElementById("last3StatusChip");
+
+    /* 渲染卡片 (正面) */
+    function renderCard(card) {
+      if (!card) return;
+      cardIdBadge.textContent = `# ${card.id}`;
+      cardQuestion.textContent = card.text;
+      
+      const themeTotal = activeDeck.length;
+      const progressTxt = (THEMES[currentThemeKey]) ? ` (第 ${currentIndex + 1}/${themeTotal} 題)` : ` (${currentIndex + 1}/${themeTotal})`;
+      cardLevelHint.textContent = `Level ${card.level} · ${card.level === 1 ? '暖身交流' : card.level === 2 ? '關係磨合' : '靈魂深談'}${progressTxt}`;
+      cardIconContainer.innerHTML = getIconSvg(card.icon);
+    }
+
+    /* 更新功能卡按鈕的禁用狀態 */
+    function updateFunctionCardButtons() {
+      if (!usedFunctionsByPlayer[currentPlayer]) {
+        usedFunctionsByPlayer[currentPlayer] = new Set();
+      }
+      const usedSet = usedFunctionsByPlayer[currentPlayer];
+      document.querySelectorAll(".btn-fn-chip").forEach(btn => {
+        const fnKey = btn.dataset.fn;
+        if (usedSet.has(fnKey)) {
+          btn.disabled = true;
+          btn.title = `${currentPlayer} 已使用過此功能牌`;
+        } else {
+          btn.disabled = false;
+          btn.title = `點擊使用 ${fnKey}`;
+        }
+      });
+    }
+
+    /* 載入主題 */
+    function loadTheme(themeKey) {
+      currentThemeKey = themeKey;
+      currentIndex = 0;
+
+      if (THEMES[themeKey]) {
+        const theme = THEMES[themeKey];
+        // 嚴格按照片上的順序
+        activeDeck = theme.cards.map(id => cardMap[id]).filter(Boolean);
+        
+        document.getElementById("themeTitle").textContent = theme.title;
+        document.getElementById("themeSlogan").textContent = theme.slogan;
+        document.getElementById("themeDesc").textContent = theme.desc;
+        document.getElementById("themeSequence").textContent = "指定順序：" + theme.cards.map(id => `#${id}`).join(" → ");
+        themeBanner.style.display = "flex";
+      } else if (themeKey === "all") {
+        activeDeck = [...CARDS].sort(() => Math.random() - 0.5);
+        themeBanner.style.display = "none";
+      } else if (themeKey.startsWith("level_")) {
+        const lvl = parseInt(themeKey.split("_")[1]);
+        activeDeck = CARDS.filter(c => c.level === lvl).sort(() => Math.random() - 0.5);
+        themeBanner.style.display = "none";
+      }
+
+      renderCard(activeDeck[currentIndex]);
+    }
+
+    function restartCurrentTheme() {
+      closeModal('gameOverModal');
+      last3Active = false;
+      last3Remaining = 3;
+      last3StatusChip.style.display = "none";
+      loadTheme(currentThemeKey);
+    }
+
+    /* 下一題邏輯 */
+    btnNextCard.addEventListener("click", () => {
+      if (last3Active) {
+        last3Remaining--;
+        if (last3Remaining <= 0) {
+          triggerGameOver("LAST 3 倒數 3 題已全數作答完畢！");
+          return;
+        } else {
+          last3StatusChip.textContent = `LAST 3 進行中：剩餘 ${last3Remaining} 題`;
+        }
+      }
+
+      if (currentIndex + 1 >= activeDeck.length) {
+        if (THEMES[currentThemeKey]) {
+          triggerGameOver(`恭喜！${THEMES[currentThemeKey].title} 的 10 張題目已依序完成！`);
+          return;
+        } else {
+          currentIndex = 0;
+        }
+      } else {
+        currentIndex++;
+      }
+
+      renderCard(activeDeck[currentIndex]);
+      playChime();
+    });
+
+    /* 遊戲結束結算：在最後揭曉任務 */
+    function triggerGameOver(reasonText) {
+      const descEl = document.getElementById("gameOverThemeTasks");
+      let taskHtml = "";
+      if (THEMES[currentThemeKey]) {
+        const t = THEMES[currentThemeKey];
+        taskHtml = `
+          <div style="background:var(--primary-light); padding:12px; border-radius:12px; margin:12px 0;">
+            <div style="font-weight:700; color:var(--primary); margin-bottom:8px;">🎁 本主題專屬親密任務已解鎖：</div>
+            ${t.tasks.map(k => `<div style="margin-bottom:6px;">• <strong>${k.name}</strong>：${k.detail}</div>`).join("")}
+          </div>
+        `;
+      } else {
+        taskHtml = `<p style="margin:12px 0;">感謝彼此專心聆聽與坦誠陪伴！給對方一個溫暖深情的擁抱吧。</p>`;
+      }
+      descEl.innerHTML = `<p style="font-weight:600;">${reasonText}</p>${taskHtml}`;
+      openModal("gameOverModal");
+    }
+
+    /* 切換玩家 */
+    function switchPlayer() {
+      currentPlayer = (currentPlayer === player1Name) ? player2Name : player1Name;
+      currentPlayerName.textContent = currentPlayer;
+      fnPlayerIndicator.textContent = currentPlayer;
+      updateFunctionCardButtons();
+    }
+    btnSwitchPlayer.addEventListener("click", switchPlayer);
+    currentPlayerName.addEventListener("click", () => openModal("playerModal"));
+
+    /* 玩家自訂暱稱儲存 */
+    document.getElementById("btnEditPlayers").addEventListener("click", () => {
+      document.getElementById("inputPlayer1").value = player1Name;
+      document.getElementById("inputPlayer2").value = player2Name;
+      openModal("playerModal");
+    });
+
+    document.getElementById("btnSavePlayers").addEventListener("click", () => {
+      const p1 = document.getElementById("inputPlayer1").value.trim() || "玩家 1";
+      const p2 = document.getElementById("inputPlayer2").value.trim() || "玩家 2";
+      
+      // 遷移已使用卡片記錄
+      const oldUsed1 = usedFunctionsByPlayer[player1Name] || new Set();
+      const oldUsed2 = usedFunctionsByPlayer[player2Name] || new Set();
+      
+      const isP1 = (currentPlayer === player1Name);
+      player1Name = p1;
+      player2Name = p2;
+      currentPlayer = isP1 ? player1Name : player2Name;
+
+      usedFunctionsByPlayer[player1Name] = oldUsed1;
+      usedFunctionsByPlayer[player2Name] = oldUsed2;
+
+      currentPlayerName.textContent = currentPlayer;
+      fnPlayerIndicator.textContent = currentPlayer;
+      updateFunctionCardButtons();
+      closeModal("playerModal");
+    });
+
+    /* 點擊功能卡 */
+    document.querySelectorAll(".btn-fn-chip").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const fnKey = btn.dataset.fn;
+        if (!usedFunctionsByPlayer[currentPlayer]) {
+          usedFunctionsByPlayer[currentPlayer] = new Set();
+        }
+        const usedSet = usedFunctionsByPlayer[currentPlayer];
+
+        if (usedSet.has(fnKey)) return;
+
+        usedSet.add(fnKey);
+        updateFunctionCardButtons();
+
+        const info = ACTION_CARDS[fnKey];
+        document.getElementById("fnModalIcon").textContent = info.icon;
+        document.getElementById("fnModalMain").textContent = info.code;
+        document.getElementById("fnModalDesc").textContent = info.desc;
+        document.getElementById("fnModalPlayerNote").innerHTML = `已由 <strong>${currentPlayer}</strong> 出牌使用！該玩家的【${fnKey}】按鈕已被禁用。`;
+
+        if (fnKey === "LAST 3") {
+          last3Active = true;
+          last3Remaining = 3;
+          last3StatusChip.style.display = "inline-block";
+          last3StatusChip.textContent = `LAST 3 進行中：剩餘 3 題`;
+        }
+
+        openModal("fnModal");
+      });
+    });
+
+    /* 主題切換 */
+    document.querySelectorAll(".theme-tab").forEach(tab => {
+      tab.addEventListener("click", () => {
+        document.querySelectorAll(".theme-tab").forEach(t => t.classList.remove("active"));
+        tab.classList.add("active");
+        loadTheme(tab.dataset.theme);
+      });
+    });
+
+    /* 目錄與搜尋 */
+    const cardListGrid = document.getElementById("cardListGrid");
+    function renderCardCatalog(list) {
+      cardListGrid.innerHTML = "";
+      list.forEach(c => {
+        const b = document.createElement("button");
+        b.className = "btn-select-card";
+        b.innerHTML = `#${c.id}<br><small style="color:var(--text-sub);">L${c.level}</small>`;
+        b.title = c.text;
+        b.onclick = () => {
+          renderCard(c);
+          closeModal("browseModal");
+        };
+        cardListGrid.appendChild(b);
+      });
+    }
+    renderCardCatalog(CARDS);
+
+    document.getElementById("searchKeyword").addEventListener("input", (e) => {
+      const q = e.target.value.trim().toLowerCase();
+      const filtered = CARDS.filter(c => c.id.includes(q) || c.text.toLowerCase().includes(q));
+      renderCardCatalog(filtered);
+    });
+
+    /* 彈窗工具函數 */
+    function openModal(id) {
+      document.getElementById(id).classList.add("active");
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove("active");
+    }
+    document.querySelectorAll(".modal-close").forEach(btn => {
+      btn.addEventListener("click", () => closeModal(btn.dataset.close));
+    });
+    document.getElementById("btnBrowseCards").addEventListener("click", () => openModal("browseModal"));
+    document.getElementById("btnTimerModal").addEventListener("click", () => openModal("timerModal"));
+
+    /* 計時器 */
+    let timerInterval = null;
+    let timerSeconds = 120;
+
+    function setTimer(sec) {
+      clearInterval(timerInterval);
+      timerSeconds = sec;
+      updateTimerDisplay();
+      document.getElementById("btnStartTimer").textContent = "開始計時";
+    }
+
+    function updateTimerDisplay() {
+      const m = Math.floor(timerSeconds / 60).toString().padStart(2, "0");
+      const s = (timerSeconds % 60).toString().padStart(2, "0");
+      document.getElementById("timerTime").textContent = `${m}:${s}`;
+    }
+
+    document.getElementById("btnStartTimer").addEventListener("click", function() {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+        this.textContent = "繼續計時";
+      } else {
+        this.textContent = "暫停";
+        timerInterval = setInterval(() => {
+          if (timerSeconds > 0) {
+            timerSeconds--;
+            updateTimerDisplay();
+          } else {
+            clearInterval(timerInterval);
+            timerInterval = null;
+            document.getElementById("btnStartTimer").textContent = "計時完成！";
+            playChime(true);
+          }
+        }, 1000);
+      }
+    });
+
+    document.getElementById("btnResetTimer").addEventListener("click", () => {
+      setTimer(120);
+    });
+
+    /* 音效 */
+    function playChime(isDone = false) {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        if (isDone) {
+          osc.type = "sine";
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.3);
+          gain.gain.setValueAtTime(0.2, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.8);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.8);
+        } else {
+          osc.type = "triangle";
+          osc.frequency.setValueAtTime(440, ctx.currentTime);
+          osc.frequency.exponentialRampToValueAtTime(659.25, ctx.currentTime + 0.15);
+          gain.gain.setValueAtTime(0.12, ctx.currentTime);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+          osc.start();
+          osc.stop(ctx.currentTime + 0.3);
+        }
+      } catch (e) {}
+    }
+
+    /* SVG 圖示 */
+    function getIconSvg(type) {
+      switch(type) {
+        case "lips":
+          return `<svg viewBox="0 0 24 24"><path d="M4 14c2.5 3 5.5 3 8 0 2.5 3 5.5 3 8 0-4-3-6-2-8-5-2 3-4 2-8 5z"/></svg>`;
+        case "trophy":
+          return `<svg viewBox="0 0 24 24"><path d="M6 9H4a2 2 0 0 1-2-2V5h4m12 4h2a2 2 0 0 0 2-2V5h-4M6 5h12v6a6 6 0 0 1-12 0V5zm6 12v4m-4 0h8"/></svg>`;
+        case "rose":
+          return `<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M12 12v9m0-5c-2-1-4 0-4 2m4-4c2-1 4 0 4 2"/></svg>`;
+        case "refresh":
+          return `<svg viewBox="0 0 24 24"><path d="M20 11A8.1 8.1 0 0 0 4.5 9M4 5v4h4m-4 4a8.1 8.1 0 0 0 15.5 2m.5 4v-4h-4"/></svg>`;
+        case "ring":
+          return `<svg viewBox="0 0 24 24"><circle cx="12" cy="14" r="7"/><path d="M10 3l2-1 2 1 1 2h-6z"/></svg>`;
+        case "mirror":
+          return `<svg viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="M12 15v6m-4 0h8"/></svg>`;
+        case "wave":
+          return `<svg viewBox="0 0 24 24"><path d="M2 12c3-4 6-4 9 0s6 4 9 0 4-2 4-2"/></svg>`;
+        case "cone":
+          return `<svg viewBox="0 0 24 24"><path d="M12 3l6 15H6zM4 21h16"/></svg>`;
+        case "stairs":
+          return `<svg viewBox="0 0 24 24"><path d="M4 19h4v-4h4v-4h4V7h4"/></svg>`;
+        case "heartbeat":
+          return `<svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg>`;
+        case "sparkle":
+          return `<svg viewBox="0 0 24 24"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2z"/></svg>`;
+        case "cheers":
+          return `<svg viewBox="0 0 24 24"><path d="M5 4h6l-2 7H7L5 4zm10 0h6l-2 7h-2l-2-7zm-7 13h4v4H8v-4zm8 0h4v4h-4v-4z"/></svg>`;
+        default:
+          return `<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>`;
+      }
+    }
+
+    // 初始化啟動
+    loadTheme("first_date");
+    updateFunctionCardButtons();
+  </script>
+</body>
+</html>
